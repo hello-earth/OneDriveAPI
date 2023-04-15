@@ -9,43 +9,41 @@ from typing import Any, Type
 
 class OneDrive:
 
-
     def __init__(self, connection_parameters: dict) -> None:
         """
         Constructor.
         :param connection_parameters: Holds all parameters necessary for connecting to OneDrive
         """
         # the following variables are set with a settings file
-        self.mutex = Lock() # mutex
-        self.threads = [] # here the running threads are saved
-        self.max_threads: int = 0 # maximum number of threads used for communicating to OneDrive
-        self.refresh_token: str = "" # used for granting a new access token
-        self.url: str = "" # browse URL of OneDrive
-        self.auth_url: str = "" # authentication URL
-        self.client_id: str = "" # ID if the registered application
-        self.permissions: list = [] # permissions as str
-        self.redirect_uri: str = "" # redirect URL
-        self.scope = '' # holds the permissions
-        self.refresh_interval: int = 0 # interval (in seconds) after which the API connection has to be refreshed
-        self.number_retry_connection: int = 0 # number of retrys to be executed to connect to the API
+        self.mutex = Lock()  # mutex
+        self.threads = []  # here the running threads are saved
+        self.max_threads: int = 0  # maximum number of threads used for communicating to OneDrive
+        self.refresh_token: str = ""  # used for granting a new access token
+        self.url: str = ""  # browse URL of OneDrive
+        self.auth_url: str = ""  # authentication URL
+        self.client_id: str = ""  # ID if the registered application
+        self.permissions: list = []  # permissions as str
+        self.redirect_uri: str = ""  # redirect URL
+        self.scope = ''  # holds the permissions
+        self.secret = ''
+        self.refresh_interval: int = 0  # interval (in seconds) after which the API connection has to be refreshed
+        self.number_retry_connection: int = 0  # number of retrys to be executed to connect to the API
 
         # the following variables are dependent on the previous ones or are derived from them
-        self.token: str = "" # actual token
-        self.last_updated: float = 0.0 # timestamp since last connection check
-        self.headers: dict = dict() # holds the token
-        self.errors: list = [] # error descriptions
-        self.is_connected = False # specifies if a connection to OneDrive is available
+        self.token: str = ""  # actual token
+        self.last_updated: float = 0.0  # timestamp since last connection check
+        self.headers: dict = dict()  # holds the token
+        self.errors: list = []  # error descriptions
+        self.is_connected = False  # specifies if a connection to OneDrive is available
 
         self._SetParameters(connection_parameters)
         self._CheckConnected()
-
 
     def __del__(self) -> None:
         """
         Destructor. Ensures all running threads are joined.
         """
         self._JoinThreads()
-
 
     def _SetsAndChecksVariable(self, parameters: dict, var: str, var_type: Type, member_var_name: str) -> None:
         """
@@ -62,8 +60,8 @@ class OneDrive:
             return None
         raise Exception("The variable \"" + var + "\" did not match the specified data type")
 
-
-    def _SetsAndChecksVariableWithDefaultValue(self, parameters: dict, var: str, default_value: Any, var_type: Type, member_var_name: str) -> None:
+    def _SetsAndChecksVariableWithDefaultValue(self, parameters: dict, var: str, default_value: Any, var_type: Type,
+                                               member_var_name: str) -> None:
         """
         Checks if the given variable is of the given type and sets the specified member variable to the value of var if it is True. Sets the default value, if the key is not given.
         :param parameters: Holds all available parameters.
@@ -77,7 +75,6 @@ class OneDrive:
         except:
             setattr(self, member_var_name, default_value)
 
-
     def _SetParameters(self, parameters: dict) -> None:
         """
         Sets all parameters necessary for connecting to OneDrive
@@ -89,11 +86,13 @@ class OneDrive:
             self._SetsAndChecksVariable(parameters, "browse_url", str, "url")
             self._SetsAndChecksVariable(parameters, "auth_url", str, "auth_url")
             self._SetsAndChecksVariable(parameters, "client_id", str, "client_id")
+            self._SetsAndChecksVariable(parameters, "secret", str, "secret")
             self._SetsAndChecksVariable(parameters, "permissions", list, "permissions")
             self._SetsAndChecksVariable(parameters, "redirect_uri", str, "redirect_uri")
 
             self._SetsAndChecksVariableWithDefaultValue(parameters, "refresh_interval", 3600, int, "refresh_interval")
-            self._SetsAndChecksVariableWithDefaultValue(parameters, "number_retry_connection", 50, int, "number_retry_connection")
+            self._SetsAndChecksVariableWithDefaultValue(parameters, "number_retry_connection", 50, int,
+                                                        "number_retry_connection")
 
             self.scope = ''
             for items in range(len(self.permissions)):
@@ -103,11 +102,11 @@ class OneDrive:
         except Exception as ex:
             raise Exception("Could not initialize parameters: " + str(ex))
 
-
     def _SaveRequest(func: callable) -> callable:
         """
         Decorator for all functions usable in public scope.
         """
+
         def Wrapper(*args, **kw):
             try:
                 return func(*args, **kw)
@@ -115,8 +114,8 @@ class OneDrive:
                 if str(ex) == "":
                     raise Exception("Unknown exception. Check internet connection")
                 raise ex
-        return Wrapper
 
+        return Wrapper
 
     @_SaveRequest
     def _Connect(self) -> None:
@@ -130,7 +129,6 @@ class OneDrive:
         else:
             self.is_connected = False
 
-
     @_SaveRequest
     def _RefreshToken(self) -> None:
         """
@@ -138,17 +136,16 @@ class OneDrive:
         """
         data = {
             "client_id": self.client_id,
-            "scope": self.permissions,
             "refresh_token": self.refresh_token,
             "redirect_uri": self.redirect_uri,
-            "grant_type": 'refresh_token'
+            "grant_type": 'refresh_token',
+            'client_secret': self.secret,
         }
         response = requests.post(self.auth_url, data=data)
         self.token = json.loads(response.text)["access_token"]
         self.refresh_token = json.loads(response.text)["refresh_token"]
         self.last_updated = time.mktime(datetime.today().timetuple())
         self.headers = {'Authorization': 'Bearer ' + self.token}
-
 
     def _CheckLastHeartbeat(self) -> None:
         """
@@ -157,7 +154,6 @@ class OneDrive:
         now = time.mktime(datetime.today().timetuple())
         if now - self.last_updated > self.refresh_interval:
             self._RefreshToken()
-
 
     def _CheckConnected(self) -> None:
         """
@@ -173,7 +169,6 @@ class OneDrive:
                 time.sleep(0.5)
         self._CheckLastHeartbeat()
         self._CheckRequestsCompleted()
-
 
     def _CheckError(self, error_text: str, response: Any) -> bool:
         """
@@ -197,7 +192,6 @@ class OneDrive:
                 self.errors.append(error_text)
         return error_occurred
 
-
     def _FetchErrors(self, prefix: str = "") -> None:
         """
         Fetches all error messages saved in 'CheckError'
@@ -210,7 +204,6 @@ class OneDrive:
                 error_text = prefix + error_text
                 raise Exception(error_text)
 
-
     def _JoinThreads(self) -> None:
         """
         Joins all active threads
@@ -221,14 +214,12 @@ class OneDrive:
             thread.join()
             self.threads.pop(0)
 
-
     def _CheckRequestsCompleted(self) -> None:
         """
         Lets the main thread wait, until all worker threads are completed
         """
         while len(self.threads) > 0:
             time.sleep(0.1)
-
 
     @_SaveRequest
     def _FetchFolderID(self, path_onedrive: str) -> str:
@@ -245,7 +236,6 @@ class OneDrive:
         self._CheckError(error_message, response)
         self._FetchErrors()
         return response["id"]
-
 
     @_SaveRequest
     def FetchAllFiles(self, path_onedrive: str) -> tuple:
@@ -270,7 +260,6 @@ class OneDrive:
                 results_files[item["name"]] = item["id"]
         return results_files, results_folder
 
-
     @_SaveRequest
     def MakeDir(self, path_onedrive: str, new_folder_name: str) -> None:
         """
@@ -290,7 +279,6 @@ class OneDrive:
         error_message = "Could not create the directory " + new_folder_name
         self._CheckError(error_message, response)
         self._FetchErrors()
-
 
     @_SaveRequest
     def MoveFile(self, dest_path_onedrive: str, src_path_onedrive: str, arg_filename: str) -> None:
@@ -320,7 +308,6 @@ class OneDrive:
                 self._FetchErrors()
                 return
 
-
     @_SaveRequest
     def MoveAllFiles(self, dest_path_onedrive: str, src_path_onedrive: str) -> None:
         """
@@ -343,7 +330,6 @@ class OneDrive:
         error_message = "Could not move all files from " + src_path_onedrive
         self._CheckError(error_message, response)
         self._FetchErrors()
-
 
     @_SaveRequest
     def Upload(self, filenames: list, path_onedrive: str, log: bool = True) -> None:
@@ -384,12 +370,12 @@ class OneDrive:
                 filename = filenames[index]
                 filename = filename.replace("\\", "/")
                 url = url_pre + path_onedrive + filename.split("/")[-1] + url_post
-                thread = Thread(target=UploadIntern, args=(filename, url, self.headers, log, self._CheckError,), daemon=True)
+                thread = Thread(target=UploadIntern, args=(filename, url, self.headers, log, self._CheckError,),
+                                daemon=True)
                 thread.start()
                 self.threads.append(thread)
             self._JoinThreads()
             self._FetchErrors("Could not upload all files: ")
-
 
     @_SaveRequest
     def Download(self, path_onedrive: str, path_local: str, specific_file: str = "", log: bool = True) -> None:
@@ -433,7 +419,8 @@ class OneDrive:
                 filename = keys[index]
                 if (specific_file != "" and specific_file == filename) or specific_file == "":
                     url = self.url + 'me/drive/items/' + all_files[filename] + "/content"
-                    thread = Thread(target=DownloadIntern, args=(path_local, filename, url, self.headers, log, self._CheckError,), daemon=True)
+                    thread = Thread(target=DownloadIntern,
+                                    args=(path_local, filename, url, self.headers, log, self._CheckError,), daemon=True)
                     thread.start()
                     self.threads.append(thread)
             self._JoinThreads()

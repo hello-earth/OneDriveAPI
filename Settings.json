@@ -1,9 +1,10 @@
 {
-  "refresh_token": "XXX",
+  "refresh_token": "0.AVYAv4kZIaFiw-anX66g3hicB4hckqgJTUloIK7MhQZzAw9yMHDxAVLSdjllFxC489TENAoxwIvbLgFzuW1tAbT0IVrD1CW6IXDs7hR-BOpvSZgRG0wVM3MN3u3gxSm_vRrlNxEJx6EDGFGf4QtIhaxXPK6TG3vdBSG39BRdN3iJ4A47x4ekwT4ipwlTQmLfm_DUew8B9FpqC9kODbFdYQK1p99x8Qo6phXKwQhaxrt0j8R98Fl-Oi4zSQszrhR7wv1xXSehg9JmfrHON33lmJ5IOjY_oywCED1swf4BkMOLijKhkjw6qbCVIJRCxye0aTxH8biSCmrxPdmhPF_7kGxdSz49R_DABJ2JMS6sLiPAo-AHNjIzMGX84YiyWKS9UTw6M1B3UR20Yik8aDcp0DvnHmdFT4P0Ncp_yEGp-JhcjVyr7SwHybm5evX9Hyx2ybAkIhMMlXwwgld5pU4ASomuPJ5DXiK1S0HrwswPGs7xRmFPVZ43RCR8TCvd2CWNsyoHhAmS_sIUOu1UOL9RBSzeSFPAGa-vFncNQ2MbuErAksfRJDqNX6jz1BBI3msN4yk3rmGLaxo8TJHhRjuLg6yJJ7p1_8ASgY8BRM1ZgLtsxVSxOpiG-st27asMkGzB3Elv62DzyFVmZSsfWkQG1Cl_ddpUZr4-vpQA575chUC7B8fpIUlgABOuG4FaB5fh5PJhviv5nuoUJnO9IgQ-Oxrawg-ZW4tBWq1YlM_b9rdJsdelOHr531c_TjIXmlgzuENuLGFjwe5pfuYvhzwOWxCc",
   "browse_url": "https://graph.microsoft.com/v1.0/",
-  "auth_url": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-  "client_id": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+  "auth_url": "https://login.microsoftonline.com/{租户id}}/oauth2/v2.0/token",
+  "client_id": "",
+  "secret": "Ob-aX5",
   "permissions": ["offline_access", "files.readwrite", "User.Read"],
-  "redirect_uri": "https://login.microsoftonline.com/common/oauth2/nativeclient",
+  "redirect_uri": "https://",
   "max_threads": 5
 }
